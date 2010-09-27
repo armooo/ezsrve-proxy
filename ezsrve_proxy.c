@@ -296,6 +296,7 @@ void check_for_timeout(server_state *state){
         }
     }
 
+    printf("timeout cleared active client %s\n", client_name(state->active_client));
     clear_active_client(state);
 }
 
