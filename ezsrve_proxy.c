@@ -31,6 +31,7 @@
 #include <arpa/inet.h>
 
 #include "client.h"
+#include "log.h"
 
 #define BUFFER_SIZE 8192
 #define MAX_CLIENTS 70
@@ -64,21 +65,7 @@
  So that is the kind of magic we have here and it seems to work.
 *************************************************************************/
 
-//Macros yanked from sys/time.h
-# define timercmp(a, b, CMP) 						      \
-  (((a)->tv_sec == (b)->tv_sec) ? 					      \
-   ((a)->tv_usec CMP (b)->tv_usec) : 					      \
-   ((a)->tv_sec CMP (b)->tv_sec))
-
-# define timersub(a, b, result)						      \
-  do {									      \
-    (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;			      \
-    (result)->tv_usec = (a)->tv_usec - (b)->tv_usec;			      \
-    if ((result)->tv_usec < 0) {					      \
-      --(result)->tv_sec;						      \
-      (result)->tv_usec += 1000000;					      \
-    }									      \
-  } while (0)
+int daemonize = 0;
 
 int max(int x, int y) {
     return ((x) > (y) ? (x) : (y));
@@ -120,13 +107,13 @@ void connect_eserv(server_state *state) {
     hints.ai_family = AF_INET;
 
     if ( getaddrinfo(state->ezsrve_address, "8002", &hints, &res) != 0 ) {
-        printf("Error parsing hostname");
+        write_log("Error parsing hostname");
         _exit(3);
     }
 
     sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     if ( sock < 0 ){
-        printf("Failed to create ezsrve socket\n");
+        write_log("Failed to create ezsrve socket\n");
         _exit(3);
     }
 
@@ -183,7 +170,7 @@ void delay_command(server_state *state) {
     timersub(&now, &state->last_sent_end, &delta);
     if ( timercmp(&delta, &delay, <) ) {
         timersub(&delay, &delta, &sleep);
-        printf("Waiting %i\n", (int)sleep.tv_usec);
+        write_log("Waiting %i\n", (int)sleep.tv_usec);
         usleep(sleep.tv_usec);
     }
 
@@ -296,7 +283,7 @@ void check_for_timeout(server_state *state){
         }
     }
 
-    printf("timeout cleared active client %s\n", client_name(state->active_client));
+    write_log("timeout cleared active client %s\n", client_name(state->active_client));
     clear_active_client(state);
 }
 
@@ -316,7 +303,7 @@ void handle_new_client(server_state *state) {
     new_sock = accept(state->server_sock, NULL, 0);
     new_client = find_free_client(state->clients);
     if ( new_client == NULL ) {
-        printf("All client slots full closing socket\n");
+        write_log("All client slots full closing socket\n");
         close(new_sock);
     } else {
         client_init(new_client, new_sock);
@@ -439,7 +426,7 @@ void server(const char *ezsrve_address) {
 }
 
 int main(int argc, char* const argv[]) {
-    int pid, daemonize = 0;
+    int pid;
     char opt;
 
     while ( (opt = getopt(argc, argv, "d")) != -1 ) {
@@ -476,6 +463,7 @@ int main(int argc, char* const argv[]) {
         close(STDERR_FILENO);
     }
 
+    init_log();
     server(argv[optind]);
     return 0;
 }

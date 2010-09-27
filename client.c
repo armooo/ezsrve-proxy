@@ -26,7 +26,7 @@
 #include <arpa/inet.h>
 
 #include "client.h"
-
+#include "log.h"
 
 void client_clear(client *client) {
     client->sock = -1;
@@ -50,18 +50,18 @@ void client_init(client *client, int sock) {
         snprintf(client->name, CLIENT_NAME_SIZE, "%s, %i", inet_ntoa(peer.sin_addr), ntohs(peer.sin_port));
     }
 
-    printf("connected %s\n", client->name);
+    write_log("connected %s\n", client->name);
 }
 
 void client_close(client *client) {
-    printf("close %s\n", client->name);
+    write_log("close %s\n", client->name);
     close(client->sock);
     client_clear(client);
 }
 
 void client_write(client *client, const char *buf, size_t len) {
     if ( client->free < len ){
-        printf("%s Client buffer full\n", client->name);
+        write_log("%s Client buffer full\n", client->name);
         client_close(client);
         return;
     }
