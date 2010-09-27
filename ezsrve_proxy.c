@@ -437,11 +437,44 @@ void server(const char *ezsrve_address) {
     }
 }
 
-int main(int argc, const char* argv[]) {
-    if (argc != 2) {
-        printf("ezsrve_proxy <ezsrve address>\n");
+int main(int argc, char* const argv[]) {
+    int pid, daemonize = 0;
+    char opt;
+
+    while ( (opt = getopt(argc, argv, "d")) != -1 ) {
+        switch (opt) {
+            case 'd':
+                daemonize = 1;
+                break;
+        }
+    }
+
+    if (argc - optind != 1) {
+        printf("ezsrve_proxy [-d] <ezsrve address>\n");
         return 1;
     }
-    server(argv[1]);
+
+    if ( daemonize ) {
+        pid = fork();
+        if ( pid < 0 ) {
+            perror("Fork failed");
+            _exit(3);
+        }
+        if ( pid > 0 ) {
+            //parent is done
+            _exit(1);
+        }
+
+        if ( setsid() == -1 ){
+            perror("setsid failed");
+            _exit(3);
+        }
+
+        close(STDIN_FILENO);
+        close(STDOUT_FILENO);
+        close(STDERR_FILENO);
+    }
+
+    server(argv[optind]);
     return 0;
 }
