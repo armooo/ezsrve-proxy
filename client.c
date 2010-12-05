@@ -75,7 +75,7 @@ void client_send(client *client) {
     content_len = CLIENT_BUFFER_SIZE - client->free;
     sent = send(client->sock, client->buf, content_len, MSG_NOSIGNAL);
     if ( sent == -1 ) {
-        perror("Bad shit went down on send");
+        log_error("Bad shit went down on send");
         client_close(client);
     }
     memmove(client->buf, &client->buf[sent], content_len - sent);
@@ -92,7 +92,7 @@ int client_recv(client *client, char *buf, size_t len) {
     if ( r == 0 ) {
        client_close(client);
     } else if ( r == -1 ) {
-        perror("Bad shit went down on recv");
+        log_error("Bad shit went down on recv");
         client_close(client);
     }
     return r;

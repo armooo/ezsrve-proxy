@@ -119,7 +119,7 @@ void connect_eserv(server_state *state) {
 
     for (;;) {
         if ( connect(sock, res->ai_addr, res->ai_addrlen) < 0 ) {
-            perror("Failed to connect to ezsrve");
+            log_error("Failed to connect to ezsrve");
         } else {
             break;
         }
@@ -145,13 +145,13 @@ void bind_server(server_state *state) {
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if ( setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on) ) < 0 ) {
-        perror("setsockopt(SO_REUSEADDR) failed");
+        log_error("setsockopt(SO_REUSEADDR) failed");
     }
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port = htons(8002);
     if ( bind(sock, (struct sockaddr *) &addr, sizeof(addr) ) < 0 ) {
-        perror("Failed to bind");
+        log_error("Failed to bind");
         _exit(3);
     }
     listen(sock,5);
@@ -387,7 +387,7 @@ void server(const char *ezsrve_address) {
         }
         r = select(nfds+1, &state.rd, &state.wr, NULL, timeout);
         if (r == -1){
-            perror("Select failed");
+            log_error("Select failed");
             _exit(3);
         }
 
@@ -445,7 +445,7 @@ int main(int argc, char* const argv[]) {
     if ( daemonize ) {
         pid = fork();
         if ( pid < 0 ) {
-            perror("Fork failed");
+            log_error("Fork failed");
             _exit(3);
         }
         if ( pid > 0 ) {
@@ -454,7 +454,7 @@ int main(int argc, char* const argv[]) {
         }
 
         if ( setsid() == -1 ){
-            perror("setsid failed");
+            log_error("setsid failed");
             _exit(3);
         }
 

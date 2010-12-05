@@ -20,6 +20,8 @@
 #include <syslog.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
 
 extern int daemonize;
 
@@ -38,4 +40,11 @@ void write_log(const char* format, ...){
     va_start (va, format);
     vsyslog(LOG_NOTICE, format, va);
     va_end(va);
+}
+
+void log_error(const char* error_log){
+    const char* error_msg;
+
+    error_msg = strerror(errno);
+    write_log("%s :\n%s", error_log, error_msg);
 }

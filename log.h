@@ -22,5 +22,6 @@
 
 void init_log();
 void write_log(const char*, ...);
+void log_error(const char* error_log);
 
 #endif
